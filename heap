@@ -1,0 +1,85 @@
+import heapq
+import re
+import tkinter as tk
+
+def heap_gorsellestir(heap_dizisi):
+    if not heap_dizisi:
+        return
+
+    pencere = tk.Tk()
+    pencere.title("Min-Heap Ağacı Görselleştirme")
+    pencere.geometry("1000x700")
+
+    canvas = tk.Canvas(pencere, width=1000, height=700, bg="#f8f9fa")
+    canvas.pack(expand=True, fill="both")
+
+    def dugum_ciz(index, x, y, dx, dy):
+        if index < len(heap_dizisi):
+            sol_index = 2 * index + 1
+            sag_index = 2 * index + 2
+
+            if sol_index < len(heap_dizisi):
+                canvas.create_line(x, y + 20, x - dx, y + dy - 20, fill="#adb5bd", width=2)
+                dugum_ciz(sol_index, x - dx, y + dy, dx / 1.8, dy)
+
+            if sag_index < len(heap_dizisi):
+                canvas.create_line(x, y + 20, x + dx, y + dy - 20, fill="#adb5bd", width=2)
+                dugum_ciz(sag_index, x + dx, y + dy, dx / 1.8, dy)
+
+            kelime = heap_dizisi[index][2]
+            frekans = -heap_dizisi[index][1]
+
+            canvas.create_oval(x - 40, y - 25, x + 40, y + 25, fill="#e0f7fa", outline="#00838f", width=2)
+
+            canvas.create_text(x, y, text=f"{kelime.capitalize()}\n({frekans})", font=("Helvetica", 10, "bold"),
+                               fill="#006064")
+
+    dugum_ciz(0, 500, 50, 250, 80)
+
+    pencere.mainloop()
+
+def main():
+    dosya_adi = input("Lütfen txt dosyasının yolunu girin: ")
+
+    try:
+        with open(dosya_adi, 'r', encoding='utf-8') as f:
+            metin = f.read()
+    except FileNotFoundError:
+        print(f"Hata: '{dosya_adi}' dosyası bulunamadı.")
+        return
+
+    kelimeler = re.findall(r'\b\w+\b', metin)
+
+    heap = []
+
+    for w in kelimeler:
+        w_kucuk = w.lower()
+        ilk_harf = w_kucuk[0]
+
+        bulundu = False
+        for i in range(len(heap)):
+            if heap[i][2] == w_kucuk:
+                mevcut_eksi_frekans = heap[i][1]
+                heap[i] = (ilk_harf, mevcut_eksi_frekans - 1, w_kucuk)
+                bulundu = True
+                break
+
+        if bulundu:
+            heapq.heapify(heap)
+        else:
+            heapq.heappush(heap, (ilk_harf, -1, w_kucuk))
+
+    heap_gorsellestir(heap)
+
+    sonuc = []
+    while heap:
+        ilk_harf, neg_f, w = heapq.heappop(heap)
+        sonuc.append((w, -neg_f))
+
+    print("\nKelimelerin Dosyada Bulunma Sayıları: ")
+    print("=" * 37)
+    for i, (kelime, sayi) in enumerate(sonuc, 1):
+        print(f"{i}. {kelime.capitalize()} ({sayi})")
+
+if __name__ == "__main__":
+    main()
